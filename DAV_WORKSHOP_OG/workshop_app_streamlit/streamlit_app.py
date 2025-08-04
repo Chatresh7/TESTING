@@ -141,7 +141,7 @@ def init_db():
         c.execute("""CREATE TABLE IF NOT EXISTS transactions (
             username TEXT,
             amount INTEGER,
-            txn_id TEXT,
+            txn_id TEXT UNIQUE,
             screenshot BYTEA
         )""")
         conn.commit()
@@ -753,6 +753,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
