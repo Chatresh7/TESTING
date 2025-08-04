@@ -1,5 +1,5 @@
 import streamlit as st
-import sqlite3
+import psycopg2  # Updated from sqlite3
 import pandas as pd
 import qrcode
 import io
@@ -12,6 +12,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 import altair as alt
 from fpdf import FPDF
+import uuid # This was already in your code, but moved it to top for best practice
 
 def send_email(to_address, subject, message_body):
     sender_email = "konchadachatresh.23.csd@anits.edu.in"
@@ -36,7 +37,7 @@ def send_email(to_address, subject, message_body):
 
 def send_email_with_pdf(to_address, subject, message_body, pdf_bytes, filename):
     sender_email = "konchadachatresh.23.csd@anits.edu.in"  # replace with your Gmail
-    app_password = "idoo pzkz gdjr mkhj"     # 16-char app password
+    app_password = "idoo pzkz gdjr mkhj"  # 16-char app password
 
     msg = MIMEMultipart()
     msg["From"] = sender_email
@@ -68,6 +69,7 @@ def generate_team_qr(data: str):
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
+    
 def clean_text(text):
     return str(text).encode('latin-1', 'replace').decode('latin-1')
 
@@ -99,9 +101,6 @@ def generate_team_pdf(team_data, username):
     return io.BytesIO(pdf_output)
 
 
-
-
-
 st.set_page_config(page_title="Workshop Portal", layout="centered")
 # Track whether to show Register or Login
 if "form_view" not in st.session_state:
@@ -114,30 +113,38 @@ def show_login():
     st.session_state.form_view = "login"
 
 
-
 # Initialize DB
 def init_db():
-    conn = sqlite3.connect("users.db")
-    c = conn.cursor()
-    c.execute("""CREATE TABLE IF NOT EXISTS users (
-        username TEXT PRIMARY KEY,
-        password TEXT
-    )""")
-    c.execute("""CREATE TABLE IF NOT EXISTS teams (
-        username TEXT,
-        team_size TEXT,
-        name1 TEXT, reg1 TEXT, year1 TEXT, branch1 TEXT, section1 TEXT,
-        name2 TEXT, reg2 TEXT, year2 TEXT, branch2 TEXT, section2 TEXT,
-        name3 TEXT, reg3 TEXT, year3 TEXT, branch3 TEXT, section3 TEXT
-    )""")
-    c.execute("""CREATE TABLE IF NOT EXISTS transactions (
-        username TEXT,
-        amount INTEGER,
-        txn_id TEXT,
-        screenshot BLOB
-    )""")
-    conn.commit()
-    return conn
+    try:
+        conn = psycopg2.connect(
+            host=st.secrets["db_host"],
+            database=st.secrets["db_name"],
+            user=st.secrets["db_username"],
+            password=st.secrets["db_password"]
+        )
+        c = conn.cursor()
+        c.execute("""CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            password TEXT
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS teams (
+            username TEXT,
+            team_size TEXT,
+            name1 TEXT, reg1 TEXT, year1 TEXT, branch1 TEXT, section1 TEXT,
+            name2 TEXT, reg2 TEXT, year2 TEXT, branch2 TEXT, section2 TEXT,
+            name3 TEXT, reg3 TEXT, year3 TEXT, branch3 TEXT, section3 TEXT
+        )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS transactions (
+            username TEXT,
+            amount INTEGER,
+            txn_id TEXT,
+            screenshot BYTEA
+        )""")
+        conn.commit()
+        return conn
+    except Exception as e:
+        st.error(f"Error connecting to the database: {e}")
+        return None
 
 conn = init_db()
 
@@ -154,7 +161,6 @@ def safe_rerun():
     except RuntimeError as e:
         if "Session state" not in str(e):
             raise
-
 
 
 # Session state
@@ -175,7 +181,7 @@ if "logout_triggered" not in st.session_state:
 def get_sidebar_choice():
     if st.session_state.user_logged_in:
         c = conn.cursor()
-        c.execute("SELECT name1, reg1, year1 FROM teams WHERE username=?", (st.session_state.username,))
+        c.execute("SELECT name1, reg1, year1 FROM teams WHERE username=%s", (st.session_state.username,))
         row = c.fetchone()
         has_team = row and all(row)
         if has_team:
@@ -197,9 +203,7 @@ def get_sidebar_choice():
 
     return None
 
-
 # Set sidebar choice globally
-#choice = get_sidebar_choice()
 choice = get_sidebar_choice()
 
 if st.session_state.logout_triggered:
@@ -212,7 +216,6 @@ if "menu_redirect" in st.session_state:
         # Set correct default in the selectbox and rerun
         st.rerun()
     del st.session_state.menu_redirect
-
 
 
 # Homepage for non-logged-in users
@@ -238,12 +241,12 @@ if not st.session_state.user_logged_in and not st.session_state.admin_logged_in:
                     st.error("Please enter a valid email address.")
                 else:
                     c = conn.cursor()
-                    c.execute("SELECT 1 FROM users WHERE username=?", (username,))
+                    c.execute("SELECT 1 FROM users WHERE username=%s", (username,))
                     if c.fetchone():
                         st.error("This email is already registered. Please login.")
                     else:
                         try:
-                            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
+                            c.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
                             conn.commit()
                             st.success("Registered successfully. Please login.")
                             send_email(
@@ -251,8 +254,8 @@ if not st.session_state.user_logged_in and not st.session_state.admin_logged_in:
                                 "Workshop Registration Confirmed ✅",
                                 "Thank you for registering! You've successfully created an account in the Workshop Portal."
                             )
-                        except:
-                            st.error("Error occurred while registering.")
+                        except Exception as e:
+                            st.error(f"Error occurred while registering: {e}")
 
     elif st.session_state.form_view == "login":
         st.subheader("Login")
@@ -267,7 +270,7 @@ if not st.session_state.user_logged_in and not st.session_state.admin_logged_in:
                     safe_rerun()
                 else:
                     c = conn.cursor()
-                    c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
+                    c.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
                     if c.fetchone():
                         st.session_state.user_logged_in = True
                         st.session_state.username = username
@@ -281,76 +284,19 @@ if not st.session_state.user_logged_in and not st.session_state.admin_logged_in:
         st.button("🔙 Back", on_click=lambda: st.session_state.update(form_view=None))
 
 
-
-# Sidebar menu based on login and team registration status
-#menu = ["Register", "Login"]
-
-
-
-
-
-#choice = st.sidebar.selectbox("Navigation", menu)
-
-
-# Register
-# if choice == "Register":
-#     st.title("User Registration")
-#     with st.form("register_form"):
-#         username = st.text_input("Email ID (will be your username)")
-#         password = st.text_input("Password", type="password")
-#         submitted = st.form_submit_button("Register")
-#         if submitted:
-#             if not username or not password:
-#                 st.error("All fields are required.")
-#             elif not is_valid_email(username):
-#                 st.error("Please enter a valid email address.")
-#             else:
-#                 c = conn.cursor()
-#                 c.execute("SELECT 1 FROM users WHERE username=?", (username,))
-#                 if c.fetchone():
-#                     st.error("This email is already registered. Please login.")
-#                 else:
-#                     try:
-#                         c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, password))
-#                         conn.commit()
-#                         st.success("Registered successfully. Please login.")
-#                         send_email(
-#                             username,
-#                             "Workshop Registration Confirmed ✅",
-#                             "Thank you for registering! You've successfully created an account in the Workshop Portal."
-#                         )
-#                     except:
-#                         st.error("Error occurred while registering.")
-
-
-# # Login
-# elif choice == "Login":
-#     st.title("Login")
-#     with st.form("login_form"):
-#         username = st.text_input("Email ID")
-#         password = st.text_input("Password", type="password")
-#         login_btn = st.form_submit_button("Login")
-#         if login_btn:
-#             if username == "admin" and password == "admin123":
-#                 st.session_state.admin_logged_in = True
-#                 st.success("Admin login successful.")
-#                 safe_rerun()
-#             else:
-#                 c = conn.cursor()
-#                 c.execute("SELECT * FROM users WHERE username=? AND password=?", (username, password))
-#                 if c.fetchone():
-#                     st.session_state.user_logged_in = True
-#                     st.session_state.username = username
-#                     st.success("Logged in successfully!")
-#                     safe_rerun()
-#                 else:
-#                     st.error("Invalid credentials.")
-
-
-
 elif choice and choice == "Team Selection":
-    import uuid  # Required for generating team code
+    if "username" in st.session_state and st.session_state.username != st.session_state.get("last_team_user"):
+    # This block executes when a new user logs in
+        st.session_state.pop("team_saved_successfully", None)
+        st.session_state.pop("qr_details", None)
+        st.session_state.pop("qr_team_size", None)
+        st.session_state.pop("team_code", None)
+        st.session_state.pop("clear_team_form", None)
 
+    # Store the current username to prevent this from running on every rerun
+        st.session_state.last_team_user = st.session_state.username
+        st.rerun()
+    
     st.title("Team Selection")
     team_size = st.radio("Select Team Size", ["Single (₹50)", "Duo (₹80)", "Trio (₹100)"])
     size_map = {"Single (₹50)": 1, "Duo (₹80)": 2, "Trio (₹100)": 3}
@@ -366,14 +312,15 @@ elif choice and choice == "Team Selection":
     with st.form("team_form"):
         details = []
         for i in range(1, size + 1):
-            label_suffix = f" {i}" if size != 1 else ""
-            st.subheader("Your Details" if size == 1 else f"Member {i}")
-            name = st.text_input(f"Name{label_suffix}", key=f"name_{i}")
-            reg = st.text_input(f"Reg Number{label_suffix}", key=f"reg_{i}")
-            year = st.selectbox(f"Year{label_suffix}", options=["2", "3", "4"], key=f"year_{i}")
-            branch = st.selectbox(f"Branch{label_suffix}", options=["CSD", "CSE", "CSM", "IT"], key=f"branch_{i}")
-            section = st.selectbox(f"Section{label_suffix}", options=["A", "B", "C", "D"], key=f"section_{i}")
-            details.extend([name, reg, year, branch, section])
+            with st.expander(f"👥 Member {i} Details", expanded=True):
+                name = st.text_input(f"👤 Name", key=f"name_{i}")
+                reg = st.text_input("🆔 Reg Number", key=f"reg_{i}")
+                year = st.selectbox("🎓 Year", ["", "2", "3", "4"], key=f"year_{i}")
+                branch = st.selectbox("🏫 Branch", ["", "CSD", "CSM", "CSE", "IT"], key=f"branch_{i}")
+                section = st.selectbox("🔤 Section", ["", "A", "B", "C", "D"], key=f"section_{i}")
+
+                details.extend([name, reg, year, branch, section])
+
 
         col1, col2 = st.columns(2)
         with col1:
@@ -389,19 +336,25 @@ elif choice and choice == "Team Selection":
                 st.error("❌ Please fill at least the first member's Name, Reg Number, and Year.")
             else:
                 c = conn.cursor()
-                c.execute("DELETE FROM teams WHERE username=?", (st.session_state.username,))
-                placeholders = ",".join(["?"] * 17)
+                c.execute("DELETE FROM teams WHERE username=%s", (st.session_state.username,))
+                placeholders = ",".join(["%s"] * 17) # Updated placeholder
                 c.execute(f"INSERT INTO teams VALUES ({placeholders})",
                           (st.session_state.username, team_size, *details, *[""] * (15 - len(details))))
                 conn.commit()
 
-                # ✅ Save team code, details in session for QR
                 team_code = f"DAVTEAM-{uuid.uuid4().hex[:8].upper()}"
                 st.session_state.team_code = team_code
                 st.session_state.qr_details = details
                 st.session_state.qr_team_size = size
                 st.session_state.team_saved_successfully = True
+
+                # ✅ Clear form inputs after submission
+                for i in range(1, size + 1):
+                    for field in ["name", "reg", "year", "branch", "section"]:
+                        st.session_state.pop(f"{field}_{i}", None)
+
                 safe_rerun()
+
 
     # ✅ After rerun, show QR and transaction link
     if (
@@ -426,10 +379,8 @@ elif choice and choice == "Team Selection":
         st.download_button("📥 Download QR Code", data=qr_bytes, file_name="team_qr.png")
         st.text_area("Team Code Info", team_info, height=120)
 
-        if st.button("➡️ Proceed to Transaction Page"):
-            st.session_state.menu_redirect = "Transaction"
-            st.session_state.team_saved_successfully = False  # Clear flag
-            safe_rerun()
+        st.info("✅ Team saved successfully. Now proceed to the **Transaction** page from the sidebar.")
+        st.markdown("👉 Use the **Navigation** panel on the left to open the Transaction page.")
 
 
 # Transaction
@@ -447,7 +398,7 @@ elif choice == "Transaction":
     }
 
     c = conn.cursor()
-    c.execute("SELECT team_size FROM teams WHERE username=?", (st.session_state.username,))
+    c.execute("SELECT team_size FROM teams WHERE username=%s", (st.session_state.username,))
     row = c.fetchone()
 
     if row:
@@ -477,7 +428,7 @@ elif choice == "Transaction":
                     st.error("❌ Please upload the transaction screenshot.")
                 else:
                     # ✅ Check if the transaction ID already exists in the database
-                    c.execute("SELECT txn_id FROM transactions WHERE txn_id = ?", (txn_id,))
+                    c.execute("SELECT txn_id FROM transactions WHERE txn_id = %s", (txn_id,))
                     existing_txn = c.fetchone()
 
                     if existing_txn:
@@ -486,14 +437,13 @@ elif choice == "Transaction":
                         # ✅ Insert the new transaction if ID is unique
                         image_bytes = screenshot.read()
                         c.execute(
-                            "REPLACE INTO transactions (username, amount, txn_id, screenshot) VALUES (?, ?, ?, ?)",
-                            (st.session_state.username, price, txn_id, image_bytes)
+                            "REPLACE INTO transactions (username, amount, txn_id, screenshot) VALUES (%s, %s, %s, %s)",
+                            (st.session_state.username, price, txn_id, psycopg2.Binary(image_bytes)) # Use psycopg2.Binary
                         )
                         conn.commit()
                         st.session_state.last_txn_id = txn_id
                         st.session_state.last_price = price
                         st.session_state.txn_success = True
-                        st.session_state.menu_redirect = "Transaction"
                         st.success("✅ Transaction submitted successfully.")
                         safe_rerun()
     else:
@@ -504,7 +454,7 @@ elif choice == "Transaction":
         st.success("Transaction recorded successfully!")
 
         # ✅ Fetch team details from DB
-        c.execute("SELECT * FROM teams WHERE username=?", (st.session_state.username,))
+        c.execute("SELECT * FROM teams WHERE username=%s", (st.session_state.username,))
         team_row = c.fetchone()
         if team_row:
             team_size = team_row[1]
@@ -544,33 +494,28 @@ elif choice == "Transaction":
             except Exception as e:
                 st.warning(f"📧 Email failed to send: {e}")
 
-        # ✅ Show WhatsApp join button
-        st.markdown(
-            """
-            <a href="https://chat.whatsapp.com/CGE0UiKKPeu63xzZqs8sMW" target="_blank"
-               style="display: inline-flex; align-items: center; padding: 10px 20px;
-                      background-color: #25D366; color: black; border-radius: 6px;
-                      text-decoration: none; font-weight: bold;">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
-                     alt="WhatsApp" width="24" style="margin-right: 10px;">
-                Join WhatsApp Group
-            </a>
-            """,
-            unsafe_allow_html=True
-        )
+            # ✅ Show WhatsApp join button
+            st.markdown(
+                """
+                <a href="https://chat.whatsapp.com/CGE0UiKKPeu63xzZqs8sMW" target="_blank"
+                    style="display: inline-flex; align-items: center; padding: 10px 20px;
+                            background-color: #25D366; color: black; border-radius: 6px;
+                            text-decoration: none; font-weight: bold;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+                            alt="WhatsApp" width="24" style="margin-right: 10px;">
+                    Join WhatsApp Group
+                </a>
+                """,
+                unsafe_allow_html=True
+            )
 
-        st.session_state.txn_success = False
-
-
-
+            st.session_state.txn_success = False
 
 
     else:
         st.warning("⚠️ Please fill out team details first on the 'Team Selection' page.")
 
 # Admin Panel
-
-
 elif choice == "Admin" and st.session_state.admin_logged_in:
     st.title("Admin Panel")
     st.subheader("Download Registration Details")
@@ -734,14 +679,6 @@ elif choice == "Admin" and st.session_state.admin_logged_in:
         st.markdown("---")
 
     # ✅ Wipe Data Section
-    st.subheader("📥 Download Backup of users.db")
-
-    try:
-        with open("users.db", "rb") as f:
-            st.download_button("💾 Download users.db", f, file_name="users.db")
-    except FileNotFoundError:
-        st.error("❌ users.db file not found.")
-
     st.subheader("💨 Danger Zone: Wipe All Data")
     with st.form("wipe_form"):
         admin_pwd = st.text_input("Enter Admin Password to Confirm", type="password")
@@ -797,5 +734,11 @@ elif choice == "Logout":
     st.session_state.logout_triggered = True
     for key in ["user_logged_in", "admin_logged_in", "username", "menu_redirect"]:
         st.session_state.pop(key, None)
+    st.session_state.pop("team_saved_successfully", None)
+    st.session_state.pop("qr_details", None)
+    st.session_state.pop("qr_team_size", None)
+    st.session_state.pop("team_code", None)
+    st.session_state.pop("clear_team_form", None)
+    st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
