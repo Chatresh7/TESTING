@@ -3,3 +3,4 @@ pandas
 qrcode
 pillow
 fpdf
+psycopg2-binary
