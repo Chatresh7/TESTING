@@ -408,8 +408,7 @@ elif choice == "Transaction":
     if row:
         team_size = row[0]
         price = team_cost.get(team_size)
-        qr_file = f"workshop_app_streamlit/{qr_map.get(team_size)}"
-
+        qr_file = qr_map.get(team_size)
         st.write(f"Team Size: {team_size}")
         st.write(f"💰 Amount to be paid: ₹{price}")
 
@@ -750,6 +749,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
