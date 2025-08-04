@@ -141,7 +141,7 @@ def init_db():
         c.execute("""CREATE TABLE IF NOT EXISTS transactions (
             username TEXT,
             amount INTEGER,
-            txn_id TEXT UNIQUE,
+            txn_id TEXT PRIMARY KEY, # Changed to PRIMARY KEY for reliability
             screenshot BYTEA
         )""")
         conn.commit()
@@ -149,7 +149,7 @@ def init_db():
     except Exception as e:
         st.error(f"Error connecting to the database: {e}")
         return None
-
+        
 conn = init_db()
 
 # Email validation function
@@ -753,6 +753,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
