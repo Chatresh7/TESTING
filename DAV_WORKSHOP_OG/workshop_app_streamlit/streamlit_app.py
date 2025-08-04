@@ -121,8 +121,10 @@ def init_db():
             database=st.secrets["db_name"],
             user=st.secrets["db_username"],
             password=st.secrets["db_password"],
+            port=5432,
             sslmode="require",
-            sslrootcert="DAV_WORKSHOP_OG/workshop_app_streamlit/prod-ca-2021.crt"
+            sslrootcert="prod-ca-2021.crt",
+            options="-c pool_mode=session"
         )
         c = conn.cursor()
         c.execute("""CREATE TABLE IF NOT EXISTS users (
@@ -744,6 +746,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
