@@ -396,9 +396,9 @@ elif choice == "Transaction":
 
     team_cost = {"Single (₹50)": 50, "Duo (₹80)": 80, "Trio (₹100)": 100}
     qr_map = {
-        "Single (₹50)": "qr-code.png",
-        "Duo (₹80)": "qr-code (1).png",
-        "Trio (₹100)": "qr-code (2).png"
+        "Single (₹50)": "DAV_WORKSHOP_OG/workshop_app_streamlit/qr-code.png",
+        "Duo (₹80)": "DAV_WORKSHOP_OG/workshop_app_streamlit/qr-code (1).png",
+        "Trio (₹100)": "DAV_WORKSHOP_OG/workshop_app_streamlit/qr-code (2).png"
     }
 
     c = conn.cursor()
@@ -750,6 +750,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
