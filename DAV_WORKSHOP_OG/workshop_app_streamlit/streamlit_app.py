@@ -441,9 +441,16 @@ elif choice == "Transaction":
                         # ✅ Insert the new transaction if ID is unique
                         image_bytes = screenshot.read()
                         c.execute(
-                            "REPLACE INTO transactions (username, amount, txn_id, screenshot) VALUES (%s, %s, %s, %s)",
-                            (st.session_state.username, price, txn_id, psycopg2.Binary(image_bytes)) # Use psycopg2.Binary
-                        )
+                                """
+                                INSERT INTO transactions (username, amount, txn_id, screenshot)
+                                VALUES (%s, %s, %s, %s)
+                                ON CONFLICT (txn_id) DO UPDATE
+                                SET username = EXCLUDED.username,
+                                amount = EXCLUDED.amount,
+                                screenshot = EXCLUDED.screenshot;
+                                """,
+                                (st.session_state.username, price, txn_id, psycopg2.Binary(image_bytes))
+                            )
                         conn.commit()
                         st.session_state.last_txn_id = txn_id
                         st.session_state.last_price = price
@@ -746,6 +753,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
