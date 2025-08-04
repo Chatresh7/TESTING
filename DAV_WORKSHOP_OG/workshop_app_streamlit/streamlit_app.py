@@ -122,7 +122,7 @@ def init_db():
             user=st.secrets["db_username"],
             password=st.secrets["db_password"],
             sslmode="require",
-            sslrootcert="prod-ca-2021.crt"
+            sslrootcert="prod-ca-2021.pem"
         )
         c = conn.cursor()
         c.execute("""CREATE TABLE IF NOT EXISTS users (
@@ -744,4 +744,5 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
