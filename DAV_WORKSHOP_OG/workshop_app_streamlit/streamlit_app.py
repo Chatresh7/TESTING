@@ -13,33 +13,43 @@ from email.mime.application import MIMEApplication
 import altair as alt
 from fpdf import FPDF
 import uuid # This was already in your code, but moved it to top for best practice
-#import streamlit as st
 
-# Function to set background
-#def set_background(image_file):
- #   with open(image_file, "rb") as image:
-  #      encoded = base64.b64encode(image.read()).decode()
-   # st.markdown(
-    #    f"""
-     #   <style>
-      #  .stApp {{
-       #     background-image: url("data:image/jpg;base64,{encoded}");
-        #    background-size: cover;
-         #   background-repeat: no-repeat;
-          #  background-position: center;
-        #}}
-        #</style>
-        #""",
-        #unsafe_allow_html=True
-    #)
-    
 
-# Call function here
-#set_background("DAV_WORKSHOP_OG/workshop_app_streamlit/bj.jpg")
+# Background image
 
-# Rest of your Streamlit code
-#st.title("My App")
 
+st.markdown("""
+    <style>
+    .stApp {
+        background-image: url('bj.png');
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
+    .center-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+    .center-buttons button {
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        background-color: #4CAF50;
+        color: white;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Centered Register & Login buttons
+st.markdown("""
+<div class="center-buttons">
+    <button onclick="window.location.href='#register'">Register</button>
+    <button onclick="window.location.href='#login'">Login</button>
+</div>
+""", unsafe_allow_html=True)
 
 def send_email(to_address, subject, message_body):
     sender_email = "konchadachatresh.23.csd@anits.edu.in"
@@ -776,6 +786,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
