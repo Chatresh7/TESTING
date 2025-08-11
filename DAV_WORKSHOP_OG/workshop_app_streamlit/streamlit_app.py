@@ -18,38 +18,6 @@ import uuid # This was already in your code, but moved it to top for best practi
 # Background image
 
 
-st.markdown("""
-    <style>
-    .stApp {
-        background-image: url('bj.png');
-        background-size: cover;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-    }
-    .center-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-    }
-    .center-buttons button {
-        padding: 10px 20px;
-        font-size: 16px;
-        cursor: pointer;
-        border: none;
-        border-radius: 5px;
-        background-color: #4CAF50;
-        color: white;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# Centered Register & Login buttons
-st.markdown("""
-<div class="center-buttons">
-    <button onclick="window.location.href='#register'">Register</button>
-    <button onclick="window.location.href='#login'">Login</button>
-</div>
-""", unsafe_allow_html=True)
 
 def send_email(to_address, subject, message_body):
     sender_email = "konchadachatresh.23.csd@anits.edu.in"
@@ -786,6 +754,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
