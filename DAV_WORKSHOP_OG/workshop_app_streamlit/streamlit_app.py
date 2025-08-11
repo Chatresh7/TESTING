@@ -34,7 +34,7 @@ def set_background(image_file):
     )
 
 # Call function here
-set_background("bj.jpg")
+set_background("DAV_WORKSHOP_OG/workshop_app_streamlit/bj.jpg")
 
 # Rest of your Streamlit code
 #st.title("My App")
@@ -775,6 +775,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
