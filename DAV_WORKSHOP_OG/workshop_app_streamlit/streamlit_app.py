@@ -36,7 +36,7 @@ def set_background(image_file):
     f"""
     <style>
     .stApp {{
-        background-image: url("file:///{DAV_WORKSHOP_OG/workshop_app_streamlit/bj.jpg}");
+        background-image: url("DAV_WORKSHOP_OG/workshop_app_streamlit/bj.jpg");
         background-size: cover;
         background-repeat: no-repeat;
         background-attachment: fixed;
@@ -789,6 +789,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
