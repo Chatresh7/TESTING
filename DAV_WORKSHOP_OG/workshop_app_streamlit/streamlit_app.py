@@ -16,7 +16,7 @@ import uuid # This was already in your code, but moved it to top for best practi
 #import streamlit as st
 
 # Function to set background
-def set_background(image_file):
+'''def set_background(image_file):
     with open(image_file, "rb") as image:
         encoded = base64.b64encode(image.read()).decode()
     st.markdown(
@@ -38,7 +38,7 @@ def set_background(image_file):
 set_background("DAV_WORKSHOP_OG/workshop_app_streamlit/bj.jpg")
 
 # Rest of your Streamlit code
-#st.title("My App")
+#st.title("My App")'''
 
 
 def send_email(to_address, subject, message_body):
@@ -776,6 +776,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
