@@ -424,8 +424,8 @@ elif choice == "Transaction":
             st.error(f"QR code image not found: {qr_file}")
 
         with st.form("txn_form"):
-            txn_id = st.text_input("Enter Transaction ID")
-            valid_txn = bool(re.match(r"^T\d{22}$", txn_id)) if txn_id else False
+            txn_id = st.text_input("Enter 12 digit UTR Transaction ID")
+            valid_txn = bool(re.match(r"^(?<!\d)\d{12}(?!\d)$", txn_id)) if txn_id else False
             screenshot = st.file_uploader("Upload Payment Screenshot", type=["png", "jpg", "jpeg"])
             submit_txn = st.form_submit_button("Submit")
 
@@ -754,6 +754,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
