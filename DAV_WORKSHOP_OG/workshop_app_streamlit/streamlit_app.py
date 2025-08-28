@@ -325,7 +325,7 @@ elif choice and choice == "Team Selection":
                 name = st.text_input(f"👤 Name", key=f"name_{i}")
                 reg = st.text_input("🆔 Reg Number", key=f"reg_{i}")
                 year = st.selectbox("🎓 Year", ["", "2", "3", "4"], key=f"year_{i}")
-                branch = st.selectbox("🏫 Branch", ["", "CSD", "CSM", "CSE", "IT"], key=f"branch_{i}")
+                branch = st.selectbox("🏫 Branch", ["", "CSD", "CSM", "CSE", "IT", "ECE", "EEE", "MECH"], key=f"branch_{i}")
                 section = st.selectbox("🔤 Section", ["", "A", "B", "C", "D"], key=f"section_{i}")
 
                 details.extend([name, reg, year, branch, section])
@@ -559,7 +559,7 @@ elif choice == "Admin" and st.session_state.admin_logged_in:
 
     st.subheader("🔍 Filter Registrations")
     year_filter = st.selectbox("Filter by Year", options=["All", "2", "3", "4"])
-    branch_filter = st.selectbox("Filter by Branch", options=["All", "CSD", "CSE", "CSM", "IT"])
+    branch_filter = st.selectbox("Filter by Branch", options=["All", "CSD", "CSE", "CSM", "IT", "ECE", "EEE", "MECH"])
     section_filter = st.selectbox("Filter by Section", options=["All", "A", "B", "C", "D"])
     team_size_filter = st.selectbox("Filter by Team Size", options=["All", "Single (₹50)", "Duo (₹80)", "Trio (₹100)"])
 
@@ -754,6 +754,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
