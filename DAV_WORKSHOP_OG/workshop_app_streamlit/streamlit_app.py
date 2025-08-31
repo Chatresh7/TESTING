@@ -238,8 +238,8 @@ if not st.session_state.user_logged_in and not st.session_state.admin_logged_in:
         st.button("🔐 Login", on_click=lambda: st.session_state.update(form_view="login"))
     
     if st.session_state.form_view == "register":
-    st.subheader("Register")
-    st.info("🚫 Registrations are now closed. Thank you for your interest!")
+        st.subheader("Register")
+        st.info("🚫 Registrations are now closed. Thank you for your interest!")
 
    #if st.session_state.form_view == "register":
      #   st.subheader("Register")
@@ -758,6 +758,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
