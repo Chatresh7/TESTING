@@ -236,35 +236,39 @@ if not st.session_state.user_logged_in and not st.session_state.admin_logged_in:
         st.button("📝 Register", on_click=lambda: st.session_state.update(form_view="register"))
     with col2:
         st.button("🔐 Login", on_click=lambda: st.session_state.update(form_view="login"))
-
+    
     if st.session_state.form_view == "register":
-        st.subheader("Register")
-        with st.form("register_form"):
-            username = st.text_input("Email ID (will be your username)")
-            password = st.text_input("Password", type="password")
-            submitted = st.form_submit_button("Register")
-            if submitted:
-                if not username or not password:
-                    st.error("All fields are required.")
-                elif not is_valid_email(username):
-                    st.error("Please enter a valid email address.")
-                else:
-                    c = conn.cursor()
-                    c.execute("SELECT 1 FROM users WHERE username=%s", (username,))
-                    if c.fetchone():
-                        st.error("This email is already registered. Please login.")
-                    else:
-                        try:
-                            c.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
-                            conn.commit()
-                            st.success("Registered successfully. Please login.")
-                            send_email(
-                                username,
-                                "Workshop Registration Confirmed ✅",
-                                "Thank you for registering! You've successfully created an account in the Workshop Portal."
-                            )
-                        except Exception as e:
-                            st.error(f"Error occurred while registering: {e}")
+    st.subheader("Register")
+    st.info("🚫 Registrations are now closed. Thank you for your interest!")
+
+   #if st.session_state.form_view == "register":
+     #   st.subheader("Register")
+       # with st.form("register_form"):
+        #    username = st.text_input("Email ID (will be your username)")
+         #   password = st.text_input("Password", type="password")
+          #  submitted = st.form_submit_button("Register")
+           # if submitted:
+            #    if not username or not password:
+             #       st.error("All fields are required.")
+              #  elif not is_valid_email(username):
+               #     st.error("Please enter a valid email address.")
+                #else:
+                 #   c = conn.cursor()
+                  #  c.execute("SELECT 1 FROM users WHERE username=%s", (username,))
+                   # if c.fetchone():
+                    #    st.error("This email is already registered. Please login.")
+                    #else:
+                     #   try:
+                      #      c.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
+                       #     conn.commit()
+                        #    st.success("Registered successfully. Please login.")
+                         #   send_email(
+                          #      username,
+                           #     "Workshop Registration Confirmed ✅",
+                            #    "Thank you for registering! You've successfully created an account in the Workshop Portal."
+                            #)
+                        #except Exception as e:
+                         #   st.error(f"Error occurred while registering: {e}")
 
     elif st.session_state.form_view == "login":
         st.subheader("Login")
@@ -754,6 +758,7 @@ elif choice == "Logout":
     st.session_state.pop("last_team_user", None)
     st.success("✅ Logged out successfully! Redirecting to home...")
     safe_rerun()
+
 
 
 
